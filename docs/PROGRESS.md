@@ -2,6 +2,29 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-06-15（その4: マイルストーン2 結合機能の実装）
+### 実施
+- gitリポジトリを初期化し初期コミットを作成（`.env` を `.gitignore` に追加）
+- 結合ロジックを `src/lib/mergePdf.ts` に分離
+  - `pdf-lib` の `PDFDocument.create/load/copyPages/addPage` で結合
+  - 破損・暗号化PDFは読込失敗時にファイル名付きエラー
+  - `downloadPdf` でBlob化→`a[download]`保存
+- `src/App.tsx` を結合UIに置換
+  - D&D + クリックでのファイル選択、PDF以外を除外
+  - 一覧表示（番号・名前・サイズ）、上へ/下へ/削除、すべてクリア
+  - 2件未満は結合ボタンを無効化、結合中表示、エラー表示
+- テンプレート資産を整理（react/vite/hero/icons.svg、`.counter` CSS、`#root` 固定幅）
+- `index.html` の title/lang を日本語アプリ用に修正
+- `npm run build` 成功（js 237KB gzip）、`npm run lint` エラーなし
+
+### 学び・気づき
+- `Blob([bytes], ...)` は TS で `BlobPart` への明示キャストが必要（Uint8Array をそのまま渡すと型エラーの可能性）
+- pdf-lib 同梱で初期JSは237KB gzip。SPEC目標2MB以内に収まる
+
+### 次にやること
+- ブラウザでの結合動作の手動確認（実PDFで検証）
+- 確認後、マイルストーン3（分割・抽出）の計画提示
+
 ## 2026-06-15（その3: 開発サーバー確認）
 ### 実施
 - `vite --port 5174` で開発サーバーを起動し、`http://localhost:5174/` が HTTP 200 を返すことを確認
