@@ -312,3 +312,48 @@ button.ghost {
   border-radius: 4px;
   padding: 1px 6px;
 }
+
+/* ページ編集タブのページカード（サムネイル + 操作ボタン） */
+.page-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  padding: 6px;
+}
+
+.page-thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.page-thumb img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+
+.page-ops {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.page-ops button {
+  padding: 2px 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.page-ops button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

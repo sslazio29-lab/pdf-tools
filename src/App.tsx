@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import MergeView from './MergeView'
 import SplitView from './SplitView'
+import EditView from './EditView'
 import './App.css'
 
-type Tab = 'merge' | 'split'
+type Tab = 'merge' | 'split' | 'edit'
 
 function App() {
   const [tab, setTab] = useState<Tab>('merge')
@@ -33,9 +34,20 @@ function App() {
         >
           分割・抽出
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'edit'}
+          className={`tab${tab === 'edit' ? ' active' : ''}`}
+          onClick={() => setTab('edit')}
+        >
+          ページ編集
+        </button>
       </div>
 
-      {tab === 'merge' ? <MergeView /> : <SplitView />}
+      {tab === 'merge' && <MergeView />}
+      {tab === 'split' && <SplitView />}
+      {tab === 'edit' && <EditView />}
     </main>
   )
 }
