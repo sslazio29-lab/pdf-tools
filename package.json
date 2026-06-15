@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "copy-pdfjs-assets": "node scripts/copy-pdfjs-assets.mjs",
+    "predev": "npm run copy-pdfjs-assets",
     "dev": "vite",
+    "prebuild": "npm run copy-pdfjs-assets",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

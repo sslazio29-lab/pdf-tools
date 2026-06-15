@@ -2,6 +2,60 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-06-15（その14: サムネイル空白の真因＝JBIG2 WASM未設定を修正、配信方式をpublic/へ変更）
+### 実施
+- ユーザー報告「まだ読めない」を受け開発サーバーのコンソールログを確認。真因が判明:
+  - 対象PDFはスキャン文書で、ページ実体が JBIG2圧縮の白黒スキャン画像（＝文字に見えるものは実テキストではなく画像）
+  - pdf.js v6 は JBIG2/JPEG2000 のデコードに WASM が必要だが `wasmUrl` 未指定で `Jbig2Error: JBig2 failed to initialize` → ページが空白に。赤い印影は別コーデックの画像なので見えていた
+  - 前回のCMap対応はテキストPDF向けには正しいが、この文書の主因ではなかった
+- 配信方式を見直し: `vite-plugin-static-copy` はグロブ展開が期待どおり動かず（`node_modules`構造を保持／dest解決が不安定）アンインストール
+- 代わりに `scripts/copy-pdfjs-assets.mjs`（Node `cpSync`）で `pdfjs-dist` の `cmaps`/`standard_fonts`/`wasm` を `public/` へコピー。Viteはpublic/をdev・build双方で素のまま配信するため確実
+- `package.json` に `copy-pdfjs-assets` と `predev`/`prebuild` を追加（自動実行）
+- `.gitignore` に `public/{cmaps,standard_fonts,wasm}` を追加（生成物のため非コミット）
+- `renderThumbnails.ts` の `getDocument` に `wasmUrl: ${BASE_URL}wasm/` を追加（cMapUrl等は維持）
+- ビルド成功。dev配信を実バイトで検証（wasm 104852B/application/wasm、cmap 40951B、font 139512B）
+
+### 学び・気づき
+- pdf.jsで「文字が出ない」原因は2系統ある。①実テキストPDF→CMap/standard_fonts未設定、②スキャンPDF→JBIG2/JPEG2000のWASM未設定。コンソールログで切り分けること（推測でCMapだけ対応して外した反省）
+- 静的アセットの確実な配信はVite標準の`public/`が堅い。プラグインのグロブ挙動でハマるより、明示的なコピースクリプト＋predev/prebuildが見通しがよい
+- 配信検証は「200か」だけでなくContent-Typeと実バイト数まで見る。SPAフォールバックが200でindex.html(text/html, 626B)を返すため、200でも誤判定する
+
+### 次にやること
+- ブラウザでスキャンPDFのサムネイルに文字（スキャン画像）が表示されるか確認
+- 確認後フェーズB（クリックで拡大プレビュー）へ
+
+## 2026-06-15（その13: サムネイルで日本語が表示されない不具合の修正）
+### 実施
+- 症状: サムネイルで文字がほぼ見えず、押印（赤い画像）だけ見える、とユーザー報告
+- 原因特定: pdf.js は CJK 文字描画に CMap、標準フォント描画に standard_fonts を別途必要とする。`getDocument` にこれらのURLを渡していなかったため、日本語テキストが描画されず空白になっていた（画像は描画される）
+- `vite-plugin-static-copy`（devDep、脆弱性0）を導入し、`pdfjs-dist/cmaps` と `pdfjs-dist/standard_fonts` を配信成果物へコピー
+- `renderThumbnails.ts` の `getDocument` に `cMapUrl`/`cMapPacked:true`/`standardFontDataUrl` を追加。URLは `import.meta.env.BASE_URL` を前置し GitHub Pages のサブパス配信にも対応
+- `npm run lint` エラーなし、`npm run build` 成功（Copied 185 items、index.js 395KB gzip）
+
+### 学び・気づき
+- pdf.js でサムネイルに日本語が出ない場合、解像度ではなく CMap/standard_fonts 未設定を疑う。画像だけ見えて文字が消えるのが典型症状
+- 抽出/分割/結合/回転は pdf-lib 担当でフォント描画に非依存。今回の不具合は表示のみで、出力PDFは正常
+
+### 次にやること
+- ブラウザで同じ日本語PDFのサムネイルに文字が表示されるか確認
+- 確認後フェーズB（クリックで拡大プレビュー）へ
+
+## 2026-06-15（その12: プレビュー強化 フェーズA サムネイルサイズ切替）
+### 実施
+- バックログ「プレビュー強化」に着手。フェーズA（サイズ切替）を実装
+- `renderThumbnails` の基準スケールを 0.4 → 0.6 に引き上げ（拡大時の鮮明さ確保）
+- 共通コンポーネント `src/SizeToggle.tsx` を新規作成（小/中/大、radiogroup）
+- `src/App.css` に `.thumb-grid.size-sm/md/lg`（列幅 90/140/220px）とトグルのスタイルを追加。既定の列幅も 110px → 140px に
+- SplitView・EditView 双方に `thumbSize` 状態とトグルを追加し、`thumb-grid` に `size-${thumbSize}` を付与
+- `npm run lint` エラーなし、`npm run build` 成功（index.js 395KB gzip、SPEC目標2MB以内）
+
+### 学び・気づき
+- App.css は `var(--muted)` を使えない（index.css に未定義）。muted系の色は `var(--text)` を使う
+
+### 次にやること
+- フェーズAをブラウザで手動確認（小/中/大の切替、大でも鮮明か）
+- 確認後フェーズB（クリックで拡大プレビュー＝ライトボックス）を実装
+
 ## 2026-06-15（その11: マイルストーン4 動作確認完了）
 ### 実施
 - ブラウザ手動確認を実施し、ユーザーがページ編集（並べ替え・回転・削除→保存）の動作を確認

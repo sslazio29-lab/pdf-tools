@@ -8,6 +8,7 @@ import {
 } from './lib/splitPdf'
 import { downloadZip } from './lib/zip'
 import { renderThumbnails } from './lib/renderThumbnails'
+import SizeToggle, { type ThumbSize } from './SizeToggle'
 
 /** 出力モード: 選択ページを1ファイルに抽出 / 全ページをバラバラ / Nページごと */
 type Mode = 'extract' | 'pages' | 'chunks'
@@ -19,6 +20,7 @@ function SplitView() {
   const [rangeInput, setRangeInput] = useState('')
   const [mode, setMode] = useState<Mode>('extract')
   const [chunkSize, setChunkSize] = useState('5')
+  const [thumbSize, setThumbSize] = useState<ThumbSize>('md')
   const [isLoading, setIsLoading] = useState(false)
   const [isWorking, setIsWorking] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -268,7 +270,9 @@ function SplitView() {
                 </div>
               )}
 
-              <div className="thumb-grid">
+              <SizeToggle value={thumbSize} onChange={setThumbSize} />
+
+              <div className={`thumb-grid size-${thumbSize}`}>
                 {thumbs.map((src, i) => {
                   const pageNum = i + 1
                   const isSel = mode === 'extract' && selected.has(pageNum)

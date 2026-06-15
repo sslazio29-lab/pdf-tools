@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# pdf.js の描画リソース（predev/prebuild で node_modules から自動生成）
+/public/cmaps
+/public/standard_fonts
+/public/wasm
+
 # Environment variables (never commit)
 .env
 .env.*

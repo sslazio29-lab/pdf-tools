@@ -265,9 +265,46 @@ button.ghost {
 
 .thumb-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 8px;
+}
+
+/* サムネイルサイズ切替（小・中・大） */
+.thumb-grid.size-sm {
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+}
+
+.thumb-grid.size-md {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.thumb-grid.size-lg {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+/* サイズ切替トグル */
+.size-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.size-row .size-label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.size-btn {
+  padding: 3px 12px;
+  font-size: 13px;
+}
+
+.size-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .thumb {

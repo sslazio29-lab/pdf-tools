@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { downloadPdf } from './lib/mergePdf'
 import { buildEditedPdf } from './lib/editPdf'
 import { renderThumbnails } from './lib/renderThumbnails'
+import SizeToggle, { type ThumbSize } from './SizeToggle'
 
 /** 編集中の1ページ分の状態。 */
 type PageItem = {
@@ -17,6 +18,7 @@ function EditView() {
   const [file, setFile] = useState<File | null>(null)
   const [thumbs, setThumbs] = useState<string[]>([])
   const [pages, setPages] = useState<PageItem[]>([])
+  const [thumbSize, setThumbSize] = useState<ThumbSize>('md')
   const [isLoading, setIsLoading] = useState(false)
   const [isWorking, setIsWorking] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -165,12 +167,14 @@ function EditView() {
                 </button>
               </div>
 
+              <SizeToggle value={thumbSize} onChange={setThumbSize} />
+
               {pages.length === 0 ? (
                 <p className="muted">
                   すべてのページが削除されました。「すべてリセット」で元に戻せます。
                 </p>
               ) : (
-                <div className="thumb-grid">
+                <div className={`thumb-grid size-${thumbSize}`}>
                   {pages.map((p, i) => (
                     <div key={p.id} className="page-card">
                       <div className="page-thumb">

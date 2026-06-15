@@ -10,15 +10,27 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
  * すべてブラウザ内で処理し、外部にデータを送信しない。
  *
  * @param file 対象のPDFファイル
- * @param scale 描画スケール（小さいほど軽い）。既定 0.4
+ * @param scale 描画スケール（小さいほど軽い）。既定 0.6
+ *   サイズ切替（大）でも鮮明さを保てるよう、やや高めに設定している。
  * @returns ページ順の dataURL 配列（index 0 = 1ページ目）
  */
 export async function renderThumbnails(
   file: File,
-  scale = 0.4,
+  scale = 0.6,
 ): Promise<string[]> {
   const bytes = await file.arrayBuffer()
-  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) })
+  // pdf.js の描画リソースの配信URL。これらを渡さないと描画が欠ける:
+  //  - cMapUrl/standardFontDataUrl: 文字が描画されず空白になる
+  //  - wasmUrl: JBIG2/JPEG2000圧縮画像(スキャンPDF等)がデコードできず空白になる
+  // BASE_URL を前置することで GitHub Pages のサブパス配信にも対応する。
+  const base = import.meta.env.BASE_URL
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(bytes),
+    cMapUrl: `${base}cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `${base}standard_fonts/`,
+    wasmUrl: `${base}wasm/`,
+  })
   let pdf: Awaited<typeof loadingTask.promise>
   try {
     pdf = await loadingTask.promise
