@@ -1,9 +1,15 @@
 import { useRef, useState } from 'react'
-import { ocrPdf, downloadText, type OcrProgress } from './lib/ocr'
+import {
+  ocrPdf,
+  downloadText,
+  downloadPdfBytes,
+  type OcrProgress,
+  type OcrResult,
+} from './lib/ocr'
 
 function OCRView() {
   const [file, setFile] = useState<File | null>(null)
-  const [text, setText] = useState<string | null>(null)
+  const [result, setResult] = useState<OcrResult | null>(null)
   const [progress, setProgress] = useState<OcrProgress | null>(null)
   const [isWorking, setIsWorking] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -21,13 +27,13 @@ function OCRView() {
     }
     setError(null)
     setFile(f)
-    setText(null)
+    setResult(null)
     setProgress(null)
   }
 
   function reset() {
     setFile(null)
-    setText(null)
+    setResult(null)
     setProgress(null)
     setError(null)
   }
@@ -35,12 +41,12 @@ function OCRView() {
   async function handleRun() {
     if (!file) return
     setError(null)
-    setText(null)
+    setResult(null)
     setProgress(null)
     setIsWorking(true)
     try {
-      const result = await ocrPdf(file, setProgress)
-      setText(result)
+      const r = await ocrPdf(file, setProgress)
+      setResult(r)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'OCR処理中にエラーが発生しました')
     } finally {
@@ -48,10 +54,16 @@ function OCRView() {
     }
   }
 
-  function handleDownload() {
-    if (text === null || !file) return
+  function handleDownloadText() {
+    if (!result || !file) return
     const base = file.name.replace(/\.pdf$/i, '')
-    downloadText(text, `${base}.txt`)
+    downloadText(result.text, `${base}.txt`)
+  }
+
+  function handleDownloadPdf() {
+    if (!result || !file) return
+    const base = file.name.replace(/\.pdf$/i, '')
+    downloadPdfBytes(result.pdfBytes, `${base}_検索可能.pdf`)
   }
 
   function onDrop(e: React.DragEvent) {
@@ -124,7 +136,7 @@ function OCRView() {
                 ? progressLabel(progress)
                 : isWorking
                   ? 'OCRエンジンを準備中…（初回は言語データの読込に時間がかかります）'
-                  : text !== null
+                  : result !== null
                     ? '完了'
                     : 'OCRを実行できます'}
             </span>
@@ -138,17 +150,22 @@ function OCRView() {
             </button>
           </div>
 
-          {text !== null && (
+          {result !== null && (
             <>
               <div className="toolbar">
                 <span className="muted">抽出結果</span>
-                <button type="button" className="primary" onClick={handleDownload}>
-                  テキスト（.txt）をダウンロード
-                </button>
+                <div className="ocr-actions">
+                  <button type="button" className="ghost" onClick={handleDownloadText}>
+                    テキスト（.txt）
+                  </button>
+                  <button type="button" className="primary" onClick={handleDownloadPdf}>
+                    検索可能PDF（.pdf）をダウンロード
+                  </button>
+                </div>
               </div>
               <textarea
                 className="ocr-output"
-                value={text}
+                value={result.text}
                 readOnly
                 spellCheck={false}
                 aria-label="OCR抽出結果"

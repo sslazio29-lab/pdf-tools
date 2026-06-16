@@ -2,6 +2,27 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-06-16（その17: マイルストーン5 OCR フェーズ2 = 検索可能PDF生成）
+### 実施
+- フェーズ2に着手。方針は「tesseract.jsのPDF出力（画像＋透明テキスト層）を使い、CJKフォントのバンドルを回避」をユーザー承認のもと採用
+- `src/lib/ocr.ts` を改修
+  - 認識を1パスで `worker.recognize(image, {}, { text: true, pdf: true })` に変更し、.txt と 検索可能PDF を同時取得。戻り値を `{ text, pdfBytes }`（型 `OcrResult`）に
+  - ページ原寸合わせのため `worker.setParameters({ user_defined_dpi: '180' })`（= 72 × OCR_SCALE 2.5）を設定
+  - 各ページの1枚PDF（`data.pdf`）を `mergePagePdfs` で pdf-lib `copyPages` 結合 → `Uint8Array` を返す
+  - `downloadPdfBytes` を追加し、`triggerDownload` 共通処理に集約
+- `src/OCRView.tsx`: 状態を `text` → `result`（OcrResult）に。結果表示に「テキスト（.txt）」と「検索可能PDF（.pdf）をダウンロード」の2ボタン（`.ocr-actions`）。PDF名は `元名_検索可能.pdf`
+- `src/App.css` に `.ocr-actions`（flex）を追加
+- `npm run lint` エラーなし、`npm run build` 成功（index.js 404KB gzip、SPEC目標2MB以内）
+
+### 学び・気づき
+- tesseract.js v7 は `recognize(image, options, output)` の第3引数 `OutputFormats` で `{ text, pdf, hocr, tsv, ... }` を選べる。`pdf:true` で画像＋透明テキスト層の1ページPDFが `data.pdf`（number[]）として得られ、日本語テキスト層も内部生成されるためCJKフォント埋め込み不要
+- 検索可能PDFのページ寸法は画像解像度に依存。pdf.js viewport scale 1 = 72dpi なので、scale 2.5描画は実180dpi。`user_defined_dpi` を 72×scale に合わせないと原寸とずれる
+- 複数の1ページPDFの結合は既存依存の pdf-lib `copyPages` でそのまま可能
+
+### 次にやること
+- ブラウザで検索可能PDFをDLし、PDFビューアで「テキスト選択・全文検索（日本語）」が効くか確認
+- 確認できればマイルストーン5を完了。残はバックログ（圧縮・画像変換）とGitHub Pagesデプロイ
+
 ## 2026-06-16（その16: マイルストーン5 OCR フェーズ1 = txt出力）
 ### 実施
 - その15のライトボックス変更をコミット（`6117501`）。最初の `git commit -m @'...'@` はBashツールにPowerShellのヒアドキュメント構文を渡してしまい先頭・末尾に余分な `@` が混入。`--amend` で修正

@@ -525,3 +525,9 @@ button.ghost {
   resize: vertical;
   white-space: pre-wrap;
 }
+
+.ocr-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

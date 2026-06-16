@@ -20,6 +20,14 @@ const LANGS = ['jpn', 'eng']
 /** OCR時のページ描画スケール。認識精度のためサムネイルより高めにする。 */
 const OCR_SCALE = 2.5
 
+/** OCRの結果。テキストと検索可能PDFの両方を持つ。 */
+export type OcrResult = {
+  /** ページ区切りを含む抽出テキスト */
+  text: string
+  /** 検索可能PDF（画像＋透明テキスト層）のバイト列 */
+  pdfBytes: Uint8Array
+}
+
 /**
  * PDFの各ページをOCRし、抽出したテキストを返す。
  *
@@ -29,12 +37,12 @@ const OCR_SCALE = 2.5
  *
  * @param file 対象のPDFファイル
  * @param onProgress 進捗コールバック（任意）
- * @returns ページ区切りを含む抽出テキスト
+ * @returns 抽出テキストと検索可能PDFのバイト列
  */
 export async function ocrPdf(
   file: File,
   onProgress?: (p: OcrProgress) => void,
-): Promise<string> {
+): Promise<OcrResult> {
   // ページ数の取得（pdf-libは結合・抽出でも使用している既存依存）
   const bytes = await file.arrayBuffer()
   let total: number
@@ -65,25 +73,59 @@ export async function ocrPdf(
     },
   })
 
+  // 描画スケール(=2.5)は 72dpi のPDF点に対する倍率。検索可能PDFのページを
+  // 原寸に合わせるため、画像の実解像度(72×スケール)をDPIとして渡す。
+  await worker.setParameters({
+    user_defined_dpi: String(Math.round(72 * OCR_SCALE)),
+  })
+
   const parts: string[] = []
+  const pagePdfs: Uint8Array[] = []
   try {
     for (let page = 1; page <= total; page++) {
       currentPage = page
       onProgress?.({ page, total, phase: 'render', ratio: 0 })
       const image = await renderPage(file, page, OCR_SCALE)
-      const { data } = await worker.recognize(image)
+      // テキストと検索可能PDF（画像＋透明テキスト層）を1パスで取得
+      const { data } = await worker.recognize(image, {}, { text: true, pdf: true })
       parts.push(`--- ${page}ページ ---\n${data.text.trim()}`)
+      if (data.pdf) {
+        pagePdfs.push(new Uint8Array(data.pdf))
+      }
     }
   } finally {
     await worker.terminate()
   }
 
-  return parts.join('\n\n')
+  const pdfBytes = await mergePagePdfs(pagePdfs)
+  return { text: parts.join('\n\n'), pdfBytes }
+}
+
+/** ページごとの1枚PDFを1つの検索可能PDFに結合する。 */
+async function mergePagePdfs(pagePdfs: Uint8Array[]): Promise<Uint8Array> {
+  const merged = await PDFDocument.create()
+  for (const bytes of pagePdfs) {
+    const src = await PDFDocument.load(bytes)
+    const copied = await merged.copyPages(src, src.getPageIndices())
+    copied.forEach((p) => merged.addPage(p))
+  }
+  return merged.save()
 }
 
 /** 抽出テキストを .txt としてダウンロードする。 */
 export function downloadText(text: string, fileName: string) {
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  triggerDownload(blob, fileName)
+}
+
+/** 検索可能PDFのバイト列を .pdf としてダウンロードする。 */
+export function downloadPdfBytes(bytes: Uint8Array, fileName: string) {
+  const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' })
+  triggerDownload(blob, fileName)
+}
+
+/** Blobを指定ファイル名でダウンロードさせる共通処理。 */
+function triggerDownload(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
