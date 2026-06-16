@@ -2,9 +2,10 @@ import { useState } from 'react'
 import MergeView from './MergeView'
 import SplitView from './SplitView'
 import EditView from './EditView'
+import OCRView from './OCRView'
 import './App.css'
 
-type Tab = 'merge' | 'split' | 'edit'
+type Tab = 'merge' | 'split' | 'edit' | 'ocr'
 
 function App() {
   const [tab, setTab] = useState<Tab>('merge')
@@ -43,11 +44,21 @@ function App() {
         >
           ページ編集
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'ocr'}
+          className={`tab${tab === 'ocr' ? ' active' : ''}`}
+          onClick={() => setTab('ocr')}
+        >
+          OCR（文字認識）
+        </button>
       </div>
 
       {tab === 'merge' && <MergeView />}
       {tab === 'split' && <SplitView />}
       {tab === 'edit' && <EditView />}
+      {tab === 'ocr' && <OCRView />}
     </main>
   )
 }

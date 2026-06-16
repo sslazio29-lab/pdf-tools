@@ -507,3 +507,21 @@ button.ghost {
 .lightbox-nav.next {
   right: 16px;
 }
+
+/* OCR 抽出結果のテキストエリア */
+.ocr-output {
+  width: 100%;
+  min-height: 320px;
+  margin-top: 4px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+  white-space: pre-wrap;
+}
