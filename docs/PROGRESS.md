@@ -2,6 +2,26 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-06-16（その15: プレビュー強化 フェーズB 拡大プレビュー＝ライトボックス）
+### 実施
+- 前回（その14）のJBIG2 WASM修正がブラウザで表示されることをユーザー確認。フェーズBに着手
+- `renderThumbnails.ts` をリファクタ: getDocument の描画リソース設定（cMap/standard_fonts/wasm）を `documentParams` に共通化し、1ページ描画を `renderPageToDataUrl` に切り出して二重管理を解消
+- 単一ページを高解像度（既定 scale 2.0）で描画する `renderPage(file, pageNum, scale)` を新設（拡大プレビュー用に都度ドキュメントを開いて当該ページのみ描画）
+- 共通コンポーネント `src/Lightbox.tsx` を新規作成: 全画面オーバーレイ、背景/✕/ESCで閉じる、‹›ボタンとキーボード←→でページ送り、`role="dialog"`/`aria-modal`対応
+  - 表示中に対象ページを高解像度で再描画。生成までは fallback（サムネイル）＋「高画質を生成中…」を表示
+  - 高解像度結果は `{ srcPageNum, url }` で保持し isRendering を派生で算出（effect内の同期setStateを避け cascading renders を回避）
+- SplitView・EditView の各サムネイルに🔍拡大ボタンを追加（SplitViewはサムネイルクリック＝選択と競合しないよう別ボタン化、`.thumb-wrap`でラップ）。EditViewは回転角をプレビューにも反映
+- `App.css` に拡大ボタン・ライトボックスのスタイルを追加
+- `npm run lint` エラーなし、`npm run build` 成功（index.js 396KB gzip、SPEC目標2MB以内）。ブラウザ手動確認完了（拡大・回転反映・ページ送り・閉じる）
+
+### 学び・気づき
+- eslint(react-hooks)は effect 本体での同期 setState を `set-state-in-effect` で弾く。「描画結果＋対象ページ番号」をセットで保持し、ローディング状態は派生で求めると同期setStateを消せる
+- 全角スペースはeslintの `no-irregular-whitespace` に触れる。間隔はCSS（margin）で取る
+- 拡大は都度 getDocument する素朴実装。現状の用途では十分だが、連続ページ送りで毎回開き直すコストはある。重くなったら loadingThumbnailの段で開いた pdf を使い回す設計に変える余地あり
+
+### 次にやること
+- プレビュー強化は完了。残はバックログ（圧縮・OCR・画像変換）とGitHub Pages デプロイ設定。優先度はユーザーと相談
+
 ## 2026-06-15（その14: サムネイル空白の真因＝JBIG2 WASM未設定を修正、配信方式をpublic/へ変更）
 ### 実施
 - ユーザー報告「まだ読めない」を受け開発サーバーのコンソールログを確認。真因が判明:

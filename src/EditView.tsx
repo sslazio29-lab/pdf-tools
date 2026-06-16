@@ -3,6 +3,7 @@ import { downloadPdf } from './lib/mergePdf'
 import { buildEditedPdf } from './lib/editPdf'
 import { renderThumbnails } from './lib/renderThumbnails'
 import SizeToggle, { type ThumbSize } from './SizeToggle'
+import Lightbox from './Lightbox'
 
 /** 編集中の1ページ分の状態。 */
 type PageItem = {
@@ -19,6 +20,7 @@ function EditView() {
   const [thumbs, setThumbs] = useState<string[]>([])
   const [pages, setPages] = useState<PageItem[]>([])
   const [thumbSize, setThumbSize] = useState<ThumbSize>('md')
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isWorking, setIsWorking] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -38,6 +40,7 @@ function EditView() {
     setFile(f)
     setThumbs([])
     setPages([])
+    setPreviewIndex(null)
     setIsLoading(true)
     try {
       const t = await renderThumbnails(f)
@@ -82,6 +85,7 @@ function EditView() {
     setFile(null)
     setThumbs([])
     setPages([])
+    setPreviewIndex(null)
     setError(null)
   }
 
@@ -185,6 +189,15 @@ function EditView() {
                           style={{ transform: `rotate(${p.rotation}deg)` }}
                         />
                         <span className="thumb-num">{i + 1}</span>
+                        <button
+                          type="button"
+                          className="thumb-zoom"
+                          title="拡大プレビュー"
+                          aria-label={`${i + 1}ページ目を拡大`}
+                          onClick={() => setPreviewIndex(i)}
+                        >
+                          🔍
+                        </button>
                       </div>
                       <div className="page-ops">
                         <button
@@ -243,6 +256,21 @@ function EditView() {
             </>
           )}
         </>
+      )}
+
+      {file && previewIndex !== null && previewIndex < pages.length && (
+        <Lightbox
+          file={file}
+          pages={pages.map((p, i) => ({
+            pageNum: i + 1,
+            srcPageNum: p.srcIndex + 1,
+            rotation: p.rotation,
+            fallback: thumbs[p.srcIndex],
+          }))}
+          index={previewIndex}
+          onIndexChange={setPreviewIndex}
+          onClose={() => setPreviewIndex(null)}
+        />
       )}
     </>
   )

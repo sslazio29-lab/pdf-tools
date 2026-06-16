@@ -9,6 +9,7 @@ import {
 import { downloadZip } from './lib/zip'
 import { renderThumbnails } from './lib/renderThumbnails'
 import SizeToggle, { type ThumbSize } from './SizeToggle'
+import Lightbox from './Lightbox'
 
 /** 出力モード: 選択ページを1ファイルに抽出 / 全ページをバラバラ / Nページごと */
 type Mode = 'extract' | 'pages' | 'chunks'
@@ -21,6 +22,7 @@ function SplitView() {
   const [mode, setMode] = useState<Mode>('extract')
   const [chunkSize, setChunkSize] = useState('5')
   const [thumbSize, setThumbSize] = useState<ThumbSize>('md')
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isWorking, setIsWorking] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -41,6 +43,7 @@ function SplitView() {
     setThumbs([])
     setSelected(new Set())
     setRangeInput('')
+    setPreviewIndex(null)
     setIsLoading(true)
     try {
       const t = await renderThumbnails(f)
@@ -89,6 +92,7 @@ function SplitView() {
     setThumbs([])
     setSelected(new Set())
     setRangeInput('')
+    setPreviewIndex(null)
     setError(null)
   }
 
@@ -277,18 +281,28 @@ function SplitView() {
                   const pageNum = i + 1
                   const isSel = mode === 'extract' && selected.has(pageNum)
                   return (
-                    <button
-                      type="button"
-                      key={pageNum}
-                      className={`thumb${isSel ? ' selected' : ''}`}
-                      onClick={() => mode === 'extract' && toggle(pageNum)}
-                      aria-pressed={isSel}
-                      aria-label={`${pageNum}ページ目${isSel ? '（選択中）' : ''}`}
-                      disabled={mode !== 'extract'}
-                    >
-                      <img src={src} alt={`${pageNum}ページ目`} loading="lazy" />
-                      <span className="thumb-num">{pageNum}</span>
-                    </button>
+                    <div className="thumb-wrap" key={pageNum}>
+                      <button
+                        type="button"
+                        className={`thumb${isSel ? ' selected' : ''}`}
+                        onClick={() => mode === 'extract' && toggle(pageNum)}
+                        aria-pressed={isSel}
+                        aria-label={`${pageNum}ページ目${isSel ? '（選択中）' : ''}`}
+                        disabled={mode !== 'extract'}
+                      >
+                        <img src={src} alt={`${pageNum}ページ目`} loading="lazy" />
+                        <span className="thumb-num">{pageNum}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="thumb-zoom"
+                        title="拡大プレビュー"
+                        aria-label={`${pageNum}ページ目を拡大`}
+                        onClick={() => setPreviewIndex(i)}
+                      >
+                        🔍
+                      </button>
+                    </div>
                   )
                 })}
               </div>
@@ -311,6 +325,20 @@ function SplitView() {
             </>
           )}
         </>
+      )}
+
+      {file && previewIndex !== null && thumbs.length > 0 && (
+        <Lightbox
+          file={file}
+          pages={thumbs.map((src, i) => ({
+            pageNum: i + 1,
+            srcPageNum: i + 1,
+            fallback: src,
+          }))}
+          index={previewIndex}
+          onIndexChange={setPreviewIndex}
+          onClose={() => setPreviewIndex(null)}
+        />
       )}
     </>
   )
