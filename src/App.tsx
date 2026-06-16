@@ -3,9 +3,10 @@ import MergeView from './MergeView'
 import SplitView from './SplitView'
 import EditView from './EditView'
 import OCRView from './OCRView'
+import ConvertView from './ConvertView'
 import './App.css'
 
-type Tab = 'merge' | 'split' | 'edit' | 'ocr'
+type Tab = 'merge' | 'split' | 'edit' | 'ocr' | 'convert'
 
 function App() {
   const [tab, setTab] = useState<Tab>('merge')
@@ -53,12 +54,22 @@ function App() {
         >
           OCR（文字認識）
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'convert'}
+          className={`tab${tab === 'convert' ? ' active' : ''}`}
+          onClick={() => setTab('convert')}
+        >
+          画像⇔PDF変換
+        </button>
       </div>
 
       {tab === 'merge' && <MergeView />}
       {tab === 'split' && <SplitView />}
       {tab === 'edit' && <EditView />}
       {tab === 'ocr' && <OCRView />}
+      {tab === 'convert' && <ConvertView />}
     </main>
   )
 }

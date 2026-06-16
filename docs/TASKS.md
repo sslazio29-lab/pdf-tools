@@ -50,8 +50,15 @@
 - [x] App.tsx にOCRタブを追加
 - [x] 動作確認（ブラウザで実スキャンPDFのOCR・進捗・DLの手動テスト）
 - [x] フェーズ2: 検索可能PDF生成（tesseract.jsのpdf出力＝画像＋透明テキスト層、pdf-libで結合、`src/lib/ocr.ts`）
-- [ ] フェーズ2 動作確認（ブラウザで検索可能PDFのDL・PDFビューアでの文字選択/検索の確認）
+- [x] フェーズ2 動作確認（検索可能PDFのDL・文字選択/検索）※ユーザー確認済み
+
+## マイルストーン6: 画像 ⇔ PDF 変換
+- [x] 画像→PDF（複数JPEG/PNGを選択順に1PDF化、pdf-lib `embedJpg`/`embedPng`、`src/lib/imageToPdf.ts`）
+- [x] PDF→画像（pdf.jsで各ページ描画→PNG/JPEG、ZIP出力、`src/lib/pdfToImages.ts`）
+- [x] 並び替え・削除UI（画像→PDF）、形式/解像度切替UI（PDF→画像）、`src/ConvertView.tsx`
+- [x] Blob群のZIP化ヘルパー追加（`src/lib/zip.ts` `downloadBlobsZip`）
+- [x] App.tsx に「画像⇔PDF変換」タブを追加
+- [ ] 動作確認（ブラウザで両方向の変換を手動テスト）
 
 ## バックログ（未着手・将来）
 - [ ] 圧縮
-- [ ] 画像 ⇔ PDF 変換

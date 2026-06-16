@@ -2,6 +2,29 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-06-16（その18: マイルストーン6 画像⇔PDF変換）
+### 実施
+- OCRフェーズ2はユーザー確認済み。マイルストーン5完了。バックログ「画像⇔PDF変換」に着手（ユーザー承認、段階的に①画像→PDF→②PDF→画像）
+- 方向①「画像→PDF」: `src/lib/imageToPdf.ts` を新規作成
+  - `imagesToPdf(files)`: 複数のJPEG/PNGを選択順に1ページずつ配置した1PDFを生成。マジックバイト（0xFFD8）でJPEG判定し `embedJpg`/`embedPng`。ページ寸法は画像実寸（再エンコードなし＝劣化なし）。既存依存pdf-libのみ
+  - `isSupportedImage(file)`: type または拡張子(.jpg/.jpeg/.png)で判定
+- 方向②「PDF→画像」: `src/lib/pdfToImages.ts` を新規作成
+  - `pdfToImages(file, format, scale, onProgress)`: pdf.jsで各ページ描画→`canvas.toBlob`でPNG/JPEG化。`renderThumbnails.ts`の`documentParams`（cMap/standard_fonts/wasm）を踏襲。JPEG時は透過対策に背景白塗り。`元名_pN.png/jpg`
+- ZIP: `src/lib/zip.ts` に `downloadBlobsZip(files, zipName)` と共通`triggerZipDownload`を追加（既存`downloadZip`はUint8Array、新規はBlob対応）
+- UI: `src/ConvertView.tsx` を新規作成。上部で「画像→PDF / PDF→画像」をmode-row切替。画像→PDFは複数追加・←→並べ替え・🗑削除（object URLで都度プレビュー、reset/削除時にrevoke）。PDF→画像はPNG/JPEG・高解像度チェック・進捗表示
+- `App.tsx` に「画像⇔PDF変換」タブ追加
+- `npm run lint` エラーなし、`npm run build` 成功（index.js 406KB gzip、SPEC目標2MB以内）
+
+### 学び・気づき
+- `.thumb-num`（position:absolute）は position 指定のある祖先が必要。`.page-card`は静的配置なので、番号バッジは relative な `.page-thumb` の中に置く
+- 画像→PDFは pdf-lib の `embedJpg`/`embedPng` で再エンコード不要。ページ＝画像実寸にすれば劣化なし。JPEG/PNGの判別はMIMEが空のことがあるためマジックバイトが堅い
+- canvas→画像は `toBlob`（非同期）。JPEGは透過非対応なので描画前に白背景を塗らないと透過部分が黒くなる
+- 画像→PDF/PDF→画像は新規依存ゼロ（pdf-lib・pdf.js・jszipの既存資産で実装）
+
+### 次にやること
+- ブラウザで両方向（複数画像→PDF、PDF→PNG/JPEG ZIP、並べ替え・削除、高解像度）を手動確認
+- 確認できればマイルストーン6完了。残バックログは「圧縮」とGitHub Pagesデプロイ
+
 ## 2026-06-16（その17: マイルストーン5 OCR フェーズ2 = 検索可能PDF生成）
 ### 実施
 - フェーズ2に着手。方針は「tesseract.jsのPDF出力（画像＋透明テキスト層）を使い、CJKフォントのバンドルを回避」をユーザー承認のもと採用
