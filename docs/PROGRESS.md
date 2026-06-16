@@ -2,6 +2,25 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-06-16（その19: GitHub Pages デプロイ設定）
+### 実施
+- マイルストーン6はユーザー動作確認済みで完了。圧縮は恩恵が少ないためスキップ（ユーザー判断）。GitHub Pages デプロイ設定に着手（ユーザー承認）
+- `vite.config.ts`: `base: '/pdf-tools/'` を追加。公開URLは `https://sslazio29-lab.github.io/pdf-tools/`（プロジェクトサイト＝サブパス配信）。コードは既に `import.meta.env.BASE_URL` でpdf.jsアセットを参照しており対応済み
+- `.github/workflows/deploy.yml` 新規作成: `main` push と手動実行(`workflow_dispatch`)で発火。`npm ci`→`npm run build`（prebuildでpdf.jsアセットを自動コピー）→公式 `configure-pages`/`upload-pages-artifact`/`deploy-pages` で公開。`permissions: pages:write, id-token:write`、`concurrency: pages`
+- `public/.nojekyll` 追加（Jekyll処理を無効化しアセット除外を防止）。`.gitignore` の `public/{cmaps,standard_fonts,wasm}` には該当せず追跡される
+- ローカル `npm run build` 成功。`dist/index.html` のアセットパスが `/pdf-tools/...` 前置になること、`dist/.nojekyll` が出力されることを確認
+- コミット（`1d06812`）し `main` へ push 済み。push でワークフローが発火する
+
+### 学び・気づき
+- またしてもコミットメッセージで PowerShell ヒアドキュメント `@'...'@` をBashツールに渡してしまい先頭に `@` が混入→`--amend` で修正。BashツールはPOSIXシェル。`-m` には通常の二重引用符を使うこと（その16でも同じ失敗）
+- `gh` CLI は未インストール（bash/PowerShell双方）。ワークフロー実行状況の確認とPages有効化はWeb UIで行う必要がある
+- GitHub Pages プロジェクトサイトはサブパス配信。`base` 未設定だとCSS/JSが404になる。SPAルーティングは無い（タブ式）ため 404.html フォールバックは不要と判断
+
+### 次にやること（ユーザー作業 → 私の確認）
+- ユーザー: GitHubの **Settings → Pages → Build and deployment → Source を「GitHub Actions」に設定**（初回のみ必要）。設定後、Actionsタブでワークフロー成功を確認
+- 公開URL `https://sslazio29-lab.github.io/pdf-tools/` で全タブ動作を確認できればデプロイ完了
+- これで主要機能＋デプロイが揃う。以降は精度改善・UI改善などの保守フェーズ
+
 ## 2026-06-16（その18: マイルストーン6 画像⇔PDF変換）
 ### 実施
 - OCRフェーズ2はユーザー確認済み。マイルストーン5完了。バックログ「画像⇔PDF変換」に着手（ユーザー承認、段階的に①画像→PDF→②PDF→画像）

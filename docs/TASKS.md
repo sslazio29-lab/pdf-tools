@@ -13,7 +13,7 @@
 - [x] pdf-lib / pdf.js 導入
 - [x] プロダクションビルドの成功確認
 - [x] ローカル開発サーバーの起動確認（`npm run dev`）
-- [ ] GitHub Pages デプロイ設定（後回し可）
+- [x] GitHub Pages デプロイ設定（base path + Actions ワークフロー）※ユーザーがSettings→PagesでSource=GitHub Actionsを設定すれば公開
 
 ## マイルストーン2: 結合機能
 - [x] PDFファイルの選択（ドラッグ&ドロップ + クリック選択）
@@ -58,7 +58,7 @@
 - [x] 並び替え・削除UI（画像→PDF）、形式/解像度切替UI（PDF→画像）、`src/ConvertView.tsx`
 - [x] Blob群のZIP化ヘルパー追加（`src/lib/zip.ts` `downloadBlobsZip`）
 - [x] App.tsx に「画像⇔PDF変換」タブを追加
-- [ ] 動作確認（ブラウザで両方向の変換を手動テスト）
+- [x] 動作確認（ブラウザで両方向の変換を手動テスト）※ユーザー確認済み
 
 ## バックログ（未着手・将来）
-- [ ] 圧縮
+- [-] 圧縮（恩恵が少ないためスキップ。ユーザー判断 2026-06-16）
