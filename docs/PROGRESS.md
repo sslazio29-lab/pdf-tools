@@ -2,6 +2,27 @@
 
 > Claudeが作業のたびに更新する。新しい記録を上に追記する。
 
+## 2026-08-11（その21: pdf.js 脆弱性対応（セキュリティ限定））
+### 実施
+- ユーザー承認のもと、依存関係の脆弱性のみを対象とする限定スライスを実施。機能追加・リファクタリング・OCRのCDN挙動変更は行わない
+- `npm audit --omit=dev` で `pdfjs-dist` 6.0.227 が GHSA-hq66-cqwq-w95j（high、悪意あるPDFを開くと任意JS実行、影響範囲 `>=5.6.83 <6.2.108`）に該当することを確認
+- `pdfjs-dist` を 6.2.108（当時のlatest、同一メジャー内）へ更新。`npm install` により `package.json` も `^6.0.227` → `^6.2.108` に更新され、脆弱版へ戻らない下限となった
+- 更新後の `node_modules/pdfjs-dist` に `cmaps` / `standard_fonts` / `wasm` / `build/pdf.worker.min.mjs` が存在することを確認（`scripts/copy-pdfjs-assets.mjs` と `?url` import の前提が維持されている）
+- 検証: `npm audit --omit=dev` 脆弱性0／`npm run lint` エラーなし／`npm run build` 成功（index.js 408KB gzip、SPEC目標2MB内）
+- 回帰確認: 合成PDF（pdf-libで生成した非機微の3ページ・2ページファイル）を用い、ヘッドレスブラウザで7項目すべて通過
+  - アプリ読込／結合（2ファイル→5ページ）／サムネイル3ページ描画／拡大プレビュー描画／2ページ抽出／PDF→画像ZIP（3枚・各約59KB）／コンソールエラー無し
+- ユーザーによる通常操作の目視確認も完了
+
+### 学び・気づき
+- pdf.js の脆弱性は「悪意あるPDFを開く」経路で成立するため、ブラウザ内処理・データ送信なしという本アプリの設計でもリスクは残る。ローカル処理は情報漏えい対策であって、パーサ脆弱性の対策にはならない
+- 修正版が同一メジャー内（6.0→6.2）だったため、`getDocument` の `cMapUrl`/`standardFontDataUrl`/`wasmUrl`、worker パス、`page.render({canvas, canvasContext, viewport})` はいずれも変更不要だった
+- 回帰確認用のブラウザ自動化とフィクスチャ生成は、リポジトリ外の一時領域に隔離して実施した。検証のためだけに開発依存を増やさずに済む
+- 開発依存には high が3件残る（`brace-expansion` / `nanoid` / `postcss`）。いずれも eslint/vite 系で配信バンドルには含まれないため、本スライスの範囲外として `TASKS.md` に記載した
+
+### 次にやること
+- 開発依存 high 3件の扱いをユーザーと判断（更新するか、影響なしとして据え置くか）
+- 保守フェーズを継続。OCR精度改善やUI改善は従来どおり優先度をユーザーと相談
+
 ## 2026-06-17（その20: プロジェクト監査とSPEC更新）
 ### 実施
 - 監査を実施。lint エラーなし／`npm audit` 脆弱性0／`npm run build` 成功（index.js 406KB gzip、SPEC目標2MB内）／作業ツリーはクリーンを確認
